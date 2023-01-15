@@ -1,13 +1,15 @@
 import sqlite3
 from sys import exit, argv
-from PyQt5.QtWidgets import QMainWindow, QApplication, QTableWidgetItem
+from PyQt5.QtWidgets import QMainWindow, QApplication, QTableWidgetItem, QWidget
 from PyQt5 import uic
+from PyQt5.QtCore import Qt
 
 
-class DBCoffee(QMainWindow):
-    def __init__(self):
-        super().__init__()
+class DBCoffee(QWidget):
+    def __init__(self, parent=None):
+        super().__init__(parent, Qt.Window)
         uic.loadUi('main.ui', self)
+        self.setWindowTitle('DB Coffee')
         with sqlite3.connect('coffee.sqlite') as self.connection:
             result_1 = self.connection.cursor().execute('''SELECT * FROM menu''').fetchall()
             result_2 = self.connection.cursor().execute('''SELECT * FROM sortes''').fetchall()
@@ -29,8 +31,27 @@ class DBCoffee(QMainWindow):
                     self.tableWidget_2.setItem(l, k, QTableWidgetItem(str(element)))
 
 
+class Editing(QMainWindow):
+    def __init__(self):
+        super().__init__()
+        uic.loadUi('addEditCoffeeForm.ui', self)
+        self.textEdit.setPlainText('SELECT * FROM menu')
+        self.pushButton.clicked.connect(self.edit)
+
+    def edit(self):
+        query = self.textEdit.toPlainText()
+        with sqlite3.connect('coffee.sqlite') as self.con:
+            cur = self.con.cursor()
+            cur.execute(query)
+        self.result()
+
+    def result(self):
+        ex = DBCoffee(self)
+        ex.show()
+
+
 if __name__ == '__main__':
     app = QApplication(argv)
-    ex = DBCoffee()
+    ex = Editing()
     ex.show()
     exit(app.exec_())
